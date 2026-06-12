@@ -17,6 +17,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "TMDB_API_READ_ACCESS_TOKEN", "\"eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1YTU4ZDUwZDhjNmU2MmNjOTU3M2Y2ZDhiNDM5YmNmYiIsIm5iZiI6MTc4MTI1MzE3MC4xNjcsInN1YiI6IjZhMmJjNDMyNDk0MDVjNTA3MmRiZGE0NSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TSiwQqCD1B9yKH__JcVn24y8H7wa9X9sB7zi0o55EiQ\"")
+        //not placed on local.properties because it usually noted on .GITIGNORE. this is just for make HR Team easier to test
     }
 
     buildTypes {
@@ -34,6 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -53,8 +57,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
+    testImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
@@ -73,6 +79,7 @@ dependencies {
 
 //    coroutines
     implementation(libs.kotlinx.coroutines)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     //hilt dagger di
     implementation(libs.dagger.hilt)
@@ -87,7 +94,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.google.truth)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
-    testImplementation(libs.junit)
 }

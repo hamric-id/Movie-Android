@@ -18,6 +18,7 @@ import com.hamric.movie_android.ui.theme.MovieAndroidTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.hamric.movie_android.ui.favorites.FavoritesScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -56,8 +57,14 @@ class MainActivity : ComponentActivity() {
                                 onBackPressed = { navController.popBackStack() }
                             )
                         }
-                        composable("favorites") {
 
+                        composable("favorites") {
+                            FavoritesScreen(
+                                onBackPressed = { navController.popBackStack() },
+                                onMovieClick = { movie ->
+                                    navController.navigate("detail/${movie.id}")
+                                }
+                            )
                         }
                     }
                 }

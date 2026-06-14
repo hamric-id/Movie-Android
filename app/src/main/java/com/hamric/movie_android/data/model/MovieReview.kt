@@ -6,7 +6,7 @@ import java.time.LocalDate
 data class MovieReview(
     val id: String,
     val authorName: String,
-    val avatarAuthorUrl: String,
+    val avatarAuthorPath: String,
     val content: String,
     val updatedAt: LocalDate
 ){
@@ -17,7 +17,7 @@ data class MovieReview(
             reviewResponse.authorDetail.name.isNotBlank() -> reviewResponse.authorDetail.name
             else -> reviewResponse.authorDetail.username
         },
-        avatarAuthorUrl = reviewResponse.authorDetail.avatarPath?.run{this.removePrefix("/")}?:"",
+        avatarAuthorPath = reviewResponse.authorDetail.avatarPath?:"",
         content = reviewResponse.content,
         updatedAt = when {
             reviewResponse.updatedAt.isNotBlank() -> reviewResponse.updatedAt

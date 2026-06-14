@@ -59,7 +59,7 @@ fun MovieReviewCard(
                 .padding(6.dp)
         ) {
             AsyncImage(
-                model = movieReview.avatarAuthorUrl,
+                model = "https://image.tmdb.org/t/p/w45${movieReview.avatarAuthorPath}",
                 contentDescription = movieReview.authorName,
                 modifier = Modifier
                     .size(50.dp)
@@ -87,7 +87,7 @@ fun MovieReviewCard(
                     lineHeight = 20.sp
                 )
 
-                val needsTruncation = movieReview.content.length > 100
+                val needsTruncation = movieReview.content.length > 75
 
                 Crossfade(
                     targetState = isExpanded,
@@ -113,7 +113,7 @@ fun MovieReviewCard(
                     } else {
                         Box {
                             Text(
-                                text = if (needsTruncation) movieReview.content.take(70) + "..." else movieReview.content,
+                                text = if (needsTruncation) movieReview.content.replace("\n", " ").take(75) + "..." else movieReview.content,
                                 fontSize = 14.sp,
                                 textAlign = TextAlign.Start,
                                 lineHeight = 20.sp,
@@ -173,7 +173,7 @@ fun PreviewReviewCard() {
             movieReview = MovieReview(
                 id = "1",
                 authorName = "John Doe",
-                avatarAuthorUrl = "https://secure.gravatar.com/avatar/f248ec34f953bc62cafcbdd81fddd6b6.jpg",
+                avatarAuthorPath = "https://secure.gravatar.com/avatar/f248ec34f953bc62cafcbdd81fddd6b6.jpg",
                 content = "This movie is absolutely amazing! The cinematography is breathtaking, " +
                         "the acting is superb, and the story keeps you on the edge of your seat. " +
                         "Highly recommend watching it!",

@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.hamric.movie_android.data.model.Movie
+import java.time.LocalDate
 
 @Composable
 fun BigPosterMovieCard(
@@ -31,7 +32,7 @@ fun BigPosterMovieCard(
     ) {
         Box {
             AsyncImage(
-                model = movie.backdropUrl,
+                model = "https://image.tmdb.org/t/p/w300${movie.backdropPath}",
                 contentDescription = movie.title,
                 modifier = Modifier.fillMaxSize()
             )
@@ -59,7 +60,8 @@ fun CardViewPosterPreview() {
                 title = "Movie 1",
                 overview = "",
                 posterPath = "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
-                backdropPath = "/dyJvKsNs2KP8qQnAXbRwDjblViy.jpg"
+                backdropPath = "/dyJvKsNs2KP8qQnAXbRwDjblViy.jpg",
+                releaseDate = LocalDate.of(2021, 6, 23)
             )
         ){}
     }

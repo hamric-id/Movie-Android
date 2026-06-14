@@ -1,7 +1,6 @@
 package com.hamric.movie_android.ui.home
 
 
-import com.hamric.movie_android.data.model.Movie
 import com.hamric.movie_android.data.repository.MovieRepository
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -16,6 +15,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import com.google.common.truth.Truth.assertThat
+import com.hamric.movie_android.data.model.Movie
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -44,8 +45,9 @@ class HomeViewModelTest {
             id = id,
             title = title,
             overview = "Test overview for movie $id",
-            posterPath = posterPath,
-            backdropPath = backdropPath
+            posterPath = posterPath?:"",
+            backdropPath = backdropPath?:"",
+            releaseDate = LocalDate.of(2019, 5,5)
         )
     }
 
@@ -149,25 +151,27 @@ class HomeViewModelTest {
             title = "Test Movie",
             overview = "Test Overview",
             posterPath = "/abc123.jpg",
-            backdropPath = "/def456.jpg"
+            backdropPath = "/def456.jpg",
+            releaseDate = LocalDate.of(2019, 5,5)
         )
 
-        assertThat(movie.posterUrl).isEqualTo("https://image.tmdb.org/t/p/w185/abc123.jpg")
-        assertThat(movie.backdropUrl).isEqualTo("https://image.tmdb.org/t/p/w300/def456.jpg")
+        assertThat(movie.posterPath).isEqualTo("/abc123.jpg")
+        assertThat(movie.backdropPath).isEqualTo("/def456.jpg")
     }
 
     @Test
-    fun testNullPosterPath() = runTest {
+    fun testBlankPosterPath() = runTest {
         val movie = Movie(
             id = 101,
             title = "No Poster Movie",
             overview = "Test Overview",
-            posterPath = null,
-            backdropPath = null
+            posterPath = "",
+            backdropPath = "",
+            releaseDate = LocalDate.of(2019, 5,5)
         )
 
-        assertThat(movie.posterUrl).isEqualTo("https://image.tmdb.org/t/p/w185")
-        assertThat(movie.backdropUrl).isEqualTo("https://image.tmdb.org/t/p/w300")
+        assertThat(movie.posterPath).isEqualTo("")
+        assertThat(movie.backdropPath).isEqualTo("")
     }
 
     @Test

@@ -2,11 +2,12 @@ package com.hamric.movie_android.data.model
 
 import com.google.gson.annotations.SerializedName
 
-data class MoviesResponse(
-    val page: Int,
-    val results: List<Movie>,
-    @SerializedName("total_pages")
-    val totalPages: Int,
-    @SerializedName("total_results")
-    val totalResults: Int
+data class MovieResponse(
+    val id: Int,
+    val title: String,
+    val overview: String,
+    @SerializedName("backdrop_path") val backdropPath: String?,
+    @SerializedName("poster_path") val posterPath: String?,
+    @SerializedName("release_date") val releaseDate: String,
+    @SerializedName("homepage") val officialUrl: String?,
 )

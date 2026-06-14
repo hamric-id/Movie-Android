@@ -12,9 +12,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.hamric.movie_android.ui.detail.DetailScreen
 import com.hamric.movie_android.ui.home.HomeScreen
 import com.hamric.movie_android.ui.theme.MovieAndroidTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -43,8 +46,15 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        composable("detail/{movieId}") {
-
+                        composable(
+                            route = "detail/{movieId}",
+                            arguments = listOf(
+                                navArgument("movieId"){ type = NavType.IntType }
+                            )
+                        ) {
+                            DetailScreen(
+                                onBackPressed = { navController.popBackStack() }
+                            )
                         }
                         composable("favorites") {
 

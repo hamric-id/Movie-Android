@@ -50,21 +50,34 @@ import android.content.ClipboardManager
 import android.content.ClipData
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.text.font.FontWeight
+import com.hamric.movie_android.ui.common.SharedFavoritesViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     onBackPressed: () -> Unit,
-    viewModel: DetailViewModel = hiltViewModel()
+    viewModel: DetailViewModel = hiltViewModel(),
+    sharedFavoritesViewModel: SharedFavoritesViewModel
 ) {
     val movie by viewModel.movieState.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isFavorite by viewModel.isFavorite.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+
+    fun handleBackPressed() {
+        sharedFavoritesViewModel.notifyFavoritesChanged()
+        onBackPressed()
+    }
+
+    // Override back button behavior
+    BackHandler(enabled = true) {
+        handleBackPressed()
+    }
 
     val reviewsPagingItems: LazyPagingItems<MovieReview> =
         viewModel.reviewsPagingFlow.collectAsLazyPagingItems()
@@ -274,7 +287,7 @@ fun DetailScreen(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onBackPressed) {
+                IconButton(onClick = {handleBackPressed()}) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
@@ -406,7 +419,8 @@ fun PreviewDetailScreen() {
         ) {
             DetailScreen(
                 onBackPressed = {},
-                viewModel = PreviewDetailViewModel()
+                viewModel = PreviewDetailViewModel(),
+                sharedFavoritesViewModel = hiltViewModel()
             )
         }
     }

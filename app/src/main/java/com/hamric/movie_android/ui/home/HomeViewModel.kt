@@ -18,6 +18,7 @@ class HomeViewModel @Inject constructor(
     private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
+    val scope = viewModelScope
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -59,7 +60,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun loadFavorites() {
+    fun loadFavorites() {
         viewModelScope.launch {
             val favorites = favoriteRepository.getAllFavorites()
             _favoriteMovies.value = favorites.toSet()

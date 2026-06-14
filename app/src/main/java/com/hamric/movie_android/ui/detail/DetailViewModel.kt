@@ -1,18 +1,17 @@
 package com.hamric.movie_android.ui.detail
 
-
+import kotlinx.coroutines.Dispatchers
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.hamric.movie_android.data.model.Movie
 import com.hamric.movie_android.data.model.MovieReview
 import com.hamric.movie_android.data.repository.FavoriteRepository
 import com.hamric.movie_android.data.repository.MovieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,6 +22,8 @@ open class DetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    val scope = viewModelScope
+
     private val movieId: UInt = checkNotNull(savedStateHandle["movieId"]).let { id ->
         when (id) {
             is Int -> id.toUInt()
@@ -30,64 +31,75 @@ open class DetailViewModel @Inject constructor(
         }
     }
 
-    private val _uiState = MutableStateFlow(DetailUiState())
-    val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
+    private val _movieState = MutableStateFlow<Movie?>(null)
+    val movieState: StateFlow<Movie?> = _movieState.asStateFlow()
 
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
-    fun setUiStateForPreview(uiState: DetailUiState) {
-        _uiState.value = uiState
-    }
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    val reviewsPagingFlow: Flow<PagingData<MovieReview>> =
+        movieRepository.getMovieReviewsPaging(movieId)
+            .cachedIn(viewModelScope)
+            .flowOn(Dispatchers.IO)
 
     init {
         loadMovieDetails()
-        loadReviews()
         checkFavoriteStatus()
     }
 
     fun toggleFavorite() {
         viewModelScope.launch {
-            val currentState = _uiState.value
-            if (currentState.isFavorite) {
+            if (_isFavorite.value) {
                 favoriteRepository.removeFavorite(movieId)
-                _uiState.update { it.copy(isFavorite = false) }
+                _isFavorite.value = false
             } else {
                 favoriteRepository.addFavorite(movieId)
-                _uiState.update { it.copy(isFavorite = true) }
+                _isFavorite.value = true
             }
         }
     }
+
 
     private fun loadMovieDetails() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _isLoading.value = true
+            _error.value = null
+
             val details = movieRepository.getMovieDetail(movieId)
+
             if (details != null) {
-                _uiState.update { it.copy(movie = details, isLoading = false) }
+                _movieState.value = details
+                _isLoading.value = false
             } else {
-                _uiState.update { it.copy(error = "Failed to load movie details", isLoading = false) }
+                _error.value = "Failed to load movie details. Please check your internet connection."
+                _isLoading.value = false
             }
         }
     }
 
-    private fun loadReviews() {
-        viewModelScope.launch {
-            val reviews = movieRepository.getMovieReviews(movieId= movieId, page= 1u)
-            _uiState.update { it.copy(movieReviews = reviews) }
-        }
-    }
 
     private fun checkFavoriteStatus() {
         viewModelScope.launch {
-            val favorite = favoriteRepository.isFavorite(movieId)
-            _uiState.update { it.copy(isFavorite = favorite) }
+            _isFavorite.value = favoriteRepository.isFavorite(movieId)
         }
     }
 
-    data class DetailUiState(
-        val isLoading: Boolean = false,
-        val movie: Movie? = null,
-        val movieReviews: List<MovieReview> = emptyList(),
-        val isFavorite: Boolean = false,
-        val error: String? = null
-    )
+
+    fun retryLoading() {
+        loadMovieDetails()
+    }
+
+    fun setPreviewData(movie: Movie, favorite: Boolean = false) {
+        _movieState.value = movie
+        _isFavorite.value = favorite
+        _isLoading.value = false
+        _error.value = null
+    }
 }
+

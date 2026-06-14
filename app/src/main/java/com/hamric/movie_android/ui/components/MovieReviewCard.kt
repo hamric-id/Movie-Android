@@ -1,5 +1,6 @@
 package com.hamric.movie_android.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -24,68 +25,132 @@ import com.hamric.movie_android.utils.DateUtils.toString
 import java.time.LocalDate
 import java.util.Locale
 import com.hamric.movie_android.R
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun MovieReviewCard(
     movieReview: MovieReview,
     modifier: Modifier = Modifier
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 3.dp)
             .border(
                 width = 1.dp,
                 color = Color.Gray,
                 shape = RoundedCornerShape(8.dp)
             )
-
             .clip(RoundedCornerShape(8.dp)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier  = Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White)
-                .padding(12.dp)
-        ){
+                .padding(6.dp)
+        ) {
             AsyncImage(
                 model = movieReview.avatarAuthorUrl,
                 contentDescription = movieReview.authorName,
                 modifier = Modifier
                     .size(50.dp)
-                    .clip(CircleShape)
-                    .padding(end = 0.dp),
+                    .clip(CircleShape),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource(R.drawable.ic_default_avatar),  // While loading
+                placeholder = painterResource(R.drawable.ic_default_avatar),
                 error = painterResource(R.drawable.ic_default_avatar)
             )
 
-            Column(modifier = Modifier
-                .background(Color.White)
-                .padding(start=12.dp)
+            Column(
+                modifier = Modifier
+                    .background(Color.White)
+                    .padding(start = 6.dp)
             ) {
                 Text(
                     text = movieReview.authorName,
+                    color = Color.Black,
                     fontSize = 16.sp
                 )
 
                 Text(
-                    text = movieReview.updatedAt.toString(pattern = "MMM d yyyy",locale = Locale.US),
+                    text = movieReview.updatedAt.toString(pattern = "MMM d yyyy", locale = Locale.US),
                     fontSize = 14.sp,
                     textAlign = TextAlign.Start,
                     lineHeight = 20.sp
                 )
 
-                Text(
-                    text = movieReview.content,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Start,
-                    lineHeight = 20.sp
-                )
+                // Simple expandable text
+                val needsTruncation = movieReview.content.length > 100
+
+                Crossfade(
+                    targetState = isExpanded,
+                    animationSpec = tween(durationMillis = 700)
+                ) { expanded ->
+                    if (expanded) {
+                        Column {
+                            Text(
+                                text = movieReview.content,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Start,
+                                lineHeight = 20.sp
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(onClick = { isExpanded = false }) {
+                                    Text("Read less", fontSize = 12.sp, color = Color(0xFF6750A4))
+                                }
+                            }
+                        }
+                    } else {
+                        Box {
+                            Text(
+                                text = if (needsTruncation) movieReview.content.take(70) + "..." else movieReview.content,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Start,
+                                lineHeight = 20.sp,
+                                maxLines = 2
+                            )
+
+                            if (needsTruncation) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(top = 2.dp),
+                                    verticalArrangement = Arrangement.Bottom
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalArrangement = Arrangement.Absolute.Right
+                                    ) {
+                                        TextButton(onClick = { isExpanded = true }) {
+                                            Text(
+                                                "Read more",
+                                                fontSize = 12.sp,
+                                                color = Color(0xFF6750A4),
+                                                modifier = Modifier
+                                                    .padding(top = 9.dp, bottom = 0.dp),
+                                                textAlign = TextAlign.End
+                                            )
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
             }
         }
-
     }
 }
 

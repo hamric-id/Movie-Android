@@ -1,17 +1,19 @@
 package com.hamric.movie_android.ui.detail
 
+
+
 import android.content.Intent
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,7 +26,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import com.hamric.movie_android.data.api.MovieApiService
 import com.hamric.movie_android.data.local.FavoriteDao
 import com.hamric.movie_android.data.local.MovieEntity
@@ -39,6 +45,15 @@ import com.hamric.movie_android.ui.components.MovieReviewCard
 import com.hamric.movie_android.utils.DateUtils.toString
 import java.time.LocalDate
 import java.util.Locale
+import androidx.compose.material3.ModalBottomSheet
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.text.font.FontWeight
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,113 +61,207 @@ fun DetailScreen(
     onBackPressed: () -> Unit,
     viewModel: DetailViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val movie by viewModel.movieState.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val isFavorite by viewModel.isFavorite.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+
+    val reviewsPagingItems: LazyPagingItems<MovieReview> =
+        viewModel.reviewsPagingFlow.collectAsLazyPagingItems()
+
     val context = LocalContext.current
 
-    fun shareMovie() {
-        val shareText = "Detailed information about the movie ${uiState.movie?.title?.run{"'$this'"}?:""} is here ${uiState.movie?.officialUrl?:"https://themoviedb.org"}"
+    var isRefreshing by remember { mutableStateOf(false) }
+
+
+    var showShareSheet by remember { mutableStateOf(false) }
+
+    fun openShareSheet() {
+        showShareSheet = true
+    }
+
+    fun copyLink() {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("Movie Link", movie?.officialUrl ?: "https://themoviedb.org/movie/${movie?.id}")
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(context, "Link copied!", Toast.LENGTH_SHORT).show()
+        showShareSheet = false
+    }
+
+    fun shareWithSystem() {
+        val shareText = "Check out ${movie?.title ?: "this movie"}! ${movie?.officialUrl ?: "https://themoviedb.org"}"
         val intent = Intent(Intent.ACTION_SEND).apply {
             putExtra(Intent.EXTRA_TEXT, shareText)
             type = "text/plain"
         }
         context.startActivity(Intent.createChooser(intent, "Share via"))
+        showShareSheet = false
+    }
+
+
+    suspend fun refreshData() {
+        isRefreshing = true
+        viewModel.retryLoading()
+        reviewsPagingItems.refresh()
+        kotlinx.coroutines.delay(500)
+        isRefreshing = false
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn (
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                viewModel.scope.launch {
+                    refreshData()
+                }
+            },
             modifier = Modifier.fillMaxSize()
         ) {
-            uiState.movie?.backdropPath?.let { path ->
-                item {
-                    AsyncImage(
-                        model = "https://image.tmdb.org/t/p/w300${path}",
-                        contentDescription = uiState.movie?.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp).windowInsetsPadding(WindowInsets.statusBars),
-                        contentScale = ContentScale.Crop
-                    )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                movie?.backdropPath?.let { path ->
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .background(Color.Transparent)
+                                .fillMaxWidth()
+                                .statusBarsPadding()
+                        ) {
+                            AsyncImage(
+                                model = "https://image.tmdb.org/t/p/w780${path}",
+                                contentDescription = movie?.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(280.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
                 }
-            }
 
-            item {
-                Column(
-                    modifier = Modifier.padding(start = 16.dp, top = 22.dp, end= 16.dp, bottom = 0.dp),
-                    verticalArrangement = Arrangement.spacedBy(22.dp)
+                item {
+                    Column(
+                        modifier = Modifier
+                            .padding(top = 22.dp, bottom = 0.dp, start = 16.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(22.dp)
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(1.dp)
+                        ) {
+                            Text(
+                                text = movie?.title ?: "",
+                                fontSize = 20.sp,
+                                color = Color.Black,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+
+                            Text(
+                                text = movie?.releaseDate?.run {
+                                    "Release: " + this.toString(pattern = "MMM d yyyy", locale = Locale.US)
+                                } ?: "",
+                                fontSize = 14.sp,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(
+                                text = "Description",
+                                fontSize = 20.sp,
+                                color = Color.Black,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+
+                            Text(
+                                text = movie?.overview ?: "",
+                                fontSize = 14.sp,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    }
+                }
+
+                if (reviewsPagingItems.itemCount > 0) {
+                    item {
+                        Text(
+                            text = "Review",
+                            fontSize = 20.sp,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .padding(top = 22.dp, bottom = 5.dp, start = 16.dp, end = 16.dp),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+
+                    items(reviewsPagingItems.itemCount) { index ->
+                        val review = reviewsPagingItems[index]
+                        review?.let {
+                            MovieReviewCard(
+                                movieReview = it,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp)
+                            )
+                        }
+                    }
+
+                    if (reviewsPagingItems.loadState.append is LoadState.Loading) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+
+                    if (reviewsPagingItems.loadState.append is LoadState.Error) {
+                        item {
+                            Text(
+                                text = "Failed to load more reviews. Swipe down to refresh.",
+                                color = Color.Red,
+                                modifier = Modifier.padding(16.dp),
+                                textAlign = TextAlign.Center,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                } else if (reviewsPagingItems.loadState.refresh is LoadState.Loading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                } else if (reviewsPagingItems.loadState.refresh is LoadState.NotLoading &&
+                    reviewsPagingItems.itemCount == 0
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(1.dp)
-                    ) {
+                    item {
                         Text(
-                            text = uiState.movie?.title ?: "",
-                            fontSize = 20.sp,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
-
-                        Text(
-                            text = uiState.movie?.releaseDate?.run{
-                                "Release: "+this.toString(pattern = "MMM d yyyy",locale = Locale.US)
-                            } ?: "",
-                            fontSize = 14.sp,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                    ) {
-                        Text(
-                            text = "Description",
-                            fontSize = 20.sp,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            textAlign = TextAlign.Start
-                        )
-
-                        Text(
-                            text = uiState.movie?.overview ?: "",
-                            fontSize = 14.sp,
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            textAlign = TextAlign.Start
+                            text = "No reviews available for this movie",
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray,
+                            fontSize = 14.sp
                         )
                     }
                 }
-            }
 
-            if (uiState.movieReviews.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "Review",
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 3.dp),
-                        textAlign = TextAlign.Start
-                    )
+                    Spacer(modifier = Modifier.padding(bottom = 80.dp))
                 }
-
-                items(uiState.movieReviews) { movieReview ->
-                    MovieReviewCard(movieReview = movieReview, modifier = Modifier.padding(start = 16.dp, end = 16.dp))
-                }
-
-
-            } else if (!uiState.isLoading && uiState.movieReviews.isEmpty()) {
-                item {
-                    Text(
-                        text = "No Review Available",
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            item{
-                Spacer(modifier = Modifier.padding(bottom = 50.dp))
             }
         }
 
@@ -167,7 +276,7 @@ fun DetailScreen(
             navigationIcon = {
                 IconButton(onClick = onBackPressed) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = Color.White
                     )
@@ -189,7 +298,7 @@ fun DetailScreen(
             horizontalArrangement = Arrangement.spacedBy(-8.dp)
         ) {
             IconButton(
-                onClick = { shareMovie() }
+                onClick = { openShareSheet() }// shareMovie() }
             ) {
                 Icon(Icons.Default.Share, contentDescription = "Share")
             }
@@ -199,13 +308,13 @@ fun DetailScreen(
                 Icon(
                     Icons.Default.Favorite,
                     contentDescription = "Favorite",
-                    tint = if (uiState.isFavorite) Color.Red else Color.DarkGray,
+                    tint = if (isFavorite) Color.Red else Color.DarkGray,
                     modifier = Modifier.size(24.dp)
                 )
             }
         }
 
-        if (uiState.isLoading) {
+        if (isLoading && !isRefreshing) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -213,10 +322,78 @@ fun DetailScreen(
                 CircularProgressIndicator()
             }
         }
+
+        error?.let { errorMessage ->
+            if (errorMessage.isNotBlank() && !isLoading) {
+                AlertDialog(
+                    onDismissRequest = { },
+                    title = { Text("Error") },
+                    text = { Text(errorMessage) },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.retryLoading()
+                                reviewsPagingItems.refresh()
+                            }
+                        ) {
+                            Text("Retry")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+        }
+
+        if (showShareSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showShareSheet = false }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Share ${movie?.title ?: "Movie"}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { copyLink() }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("📋", fontSize = 24.sp)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Copy link")
+                    }
+
+                    HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { shareWithSystem() }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("↗️", fontSize = 24.sp)
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("More options...")
+                    }
+                }
+            }
+        }
     }
 }
-
-
 
 @Preview(name = "DetailScreen - Direct Preview")
 @Preview(name = "DetailScreen - Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
@@ -236,145 +413,70 @@ fun PreviewDetailScreen() {
 }
 
 class PreviewDetailViewModel : DetailViewModel(
-    movieRepository = MovieRepository( apiService = MockMovieApiService()),
+    movieRepository = MovieRepository(apiService = MockMovieApiService()),
     favoriteRepository = MockFavoriteRepository(),
     savedStateHandle = SavedStateHandle(mapOf("movieId" to 2))
 ) {
     init {
-        setUiStateForPreview(
-            DetailUiState(
-                isLoading = false,
-                movie = Movie(
-                    id = 2,
-                    title = "The Dark Knight",
-                    overview = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, " +
-                            "Batman must accept one of the greatest psychological and physical tests of his ability " +
-                            "to fight injustice.",
-                    posterPath = "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-                    backdropPath = "/zfbjgQE1uSd9wiPTX4VzsLi0rGG.jpg",
-                    releaseDate = LocalDate.of(2008, 7, 18)
-                ),
-                movieReviews = listOf(
-                    MovieReview(
-                        id = "1",
-                        authorName = "John Doe",
-                        avatarAuthorUrl = "https://secure.gravatar.com/avatar/f248ec34f953bc62cafcbdd81fddd6b6.jpg",
-                        content = "Absolutely amazing! Heath Ledger's performance as the Joker is iconic. " +
-                                "This is hands down the best superhero movie ever made.",
-                        updatedAt = LocalDate.of(2024, 1, 15)
-                    ),
-                    MovieReview(
-                        id = "2",
-                        authorName = "Jane Smith",
-                        avatarAuthorUrl = "https://secure.gravatar.com/avatar/f248ec34f953bc62cafcbdd81fddd6b6.jpg",
-                        content = "A masterpiece of modern cinema. Christopher Nolan at his best.",
-                        updatedAt = LocalDate.of(2024, 2, 20)
-                    ),
-                    MovieReview(
-                        id = "3",
-                        authorName = "Toyol",
-                        avatarAuthorUrl = "https://secure.gravatar.com/avatar/f248ec34f953bc62cafcbdd81fddd6b6.jpg",
-                        content = "A masterpiece of modern cinema. Christopher Nolan at his best.",
-                        updatedAt = LocalDate.of(2024, 2, 20)
-                    )
-                ),
-                isFavorite = true,
-                error = null
-            )
+        setPreviewData(
+            movie = Movie(
+                id = 2,
+                title = "The Dark Knight",
+                overview = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, " +
+                        "Batman must accept one of the greatest psychological and physical tests of his ability " +
+                        "to fight injustice.",
+                posterPath = "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+                backdropPath = "/zfbjgQE1uSd9wiPTX4VzsLi0rGG.jpg",
+                releaseDate = LocalDate.of(2008, 7, 18)
+            ),
+            favorite = true
         )
     }
 }
 
 class MockMovieApiService : MovieApiService {
-
     override suspend fun getMovieDetail(movieId: UInt, language: String): MovieResponse {
         return MovieResponse(
             id = movieId.toInt(),
             title = "The Dark Knight",
-            overview = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, " +
-                    "Batman must accept one of the greatest psychological and physical tests of his ability " +
-                    "to fight injustice.",
+            overview = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham...",
             posterPath = "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
             backdropPath = "/zfbjgQE1uSd9wiPTX4VzsLi0rGG.jpg",
             releaseDate = "2008-07-18",
-            officialUrl = "http://www.starwars.com/films/star-wars-episode-iv-a-new-hope"
-        )
-    }
-    override suspend fun getPopularMovies(
-        language: String,
-        region: String,
-        page: UInt
-    ): MoviesResponse {
-        return MoviesResponse(
-            page = 1,
-            results = listOf(),
-            totalPages = 1,
-            totalResults = 0
+            officialUrl = "https://www.themoviedb.org/movie/155"
         )
     }
 
-    override suspend fun getTopRatedMovies(
-        language: String,
-        region: String,
-        page: UInt
-    ): MoviesResponse {
-        return MoviesResponse(
-            page = 1,
-            results = listOf(),
-            totalPages = 1,
-            totalResults = 0
-        )
+    override suspend fun getPopularMovies(language: String, region: String, page: UInt): MoviesResponse {
+        return MoviesResponse(page = 1, results = emptyList(), totalPages = 1, totalResults = 0)
     }
 
-    override suspend fun getNowPlayingMovies(
-        language: String,
-        region: String,
-        page: UInt
-    ): MoviesResponse {
-        return MoviesResponse(
-            page = 1,
-            results = listOf(),
-            totalPages = 1,
-            totalResults = 0
-        )
+    override suspend fun getTopRatedMovies(language: String, region: String, page: UInt): MoviesResponse {
+        return MoviesResponse(page = 1, results = emptyList(), totalPages = 1, totalResults = 0)
     }
 
-
+    override suspend fun getNowPlayingMovies(language: String, region: String, page: UInt): MoviesResponse {
+        return MoviesResponse(page = 1, results = emptyList(), totalPages = 1, totalResults = 0)
+    }
 
     override suspend fun getMovieReviews(movieId: UInt, page: UInt): ReviewsResponse {
         return ReviewsResponse(
             id = 1,
-            page = 1,
+            page = page.toInt(),
             results = emptyList(),
-            totalPages = 1,
-            totalResults = 2
+            totalPages = 3,
+            totalResults = 45
         )
     }
 }
 
-class MockFavoriteRepository : FavoriteRepository(
-    favoriteDao = MockFavoriteDao()
-)
+class MockFavoriteRepository : FavoriteRepository(favoriteDao = MockFavoriteDao())
 
 class MockFavoriteDao : FavoriteDao {
     private val favorites = mutableSetOf<Int>()
 
-    override suspend fun addToFavorites(movieId: Int) {
-        favorites.add(movieId)
-    }
-
-    override suspend fun removeFromFavorites(movieId: Int) {
-        favorites.remove(movieId)
-    }
-
-    override suspend fun getAllFavorites(): List<MovieEntity> {
-        return favorites.map { MovieEntity(id = it) }
-    }
-
-    override suspend fun isFavorite(movieId: Int): Boolean {
-        return favorites.contains(movieId)
-    }
+    override suspend fun addToFavorites(movieId: Int) { favorites.add(movieId) }
+    override suspend fun removeFromFavorites(movieId: Int) { favorites.remove(movieId) }
+    override suspend fun getAllFavorites(): List<MovieEntity> = favorites.map { MovieEntity(id = it) }
+    override suspend fun isFavorite(movieId: Int): Boolean = favorites.contains(movieId)
 }
-
-
-

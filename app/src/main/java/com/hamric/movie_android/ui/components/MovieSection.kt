@@ -10,7 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -24,15 +24,18 @@ fun MovieSection(
     title: String,
     movies: List<Movie>,
     cardStyle: CardStyle,
-    onMovieClick: (Movie) -> Unit
+    onFavoriteClick: (Movie) -> Unit = {},
+    isFavorite: (Movie) -> Boolean = {false},
+    onMovieClick: (Movie) -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
         Text(
             text = title,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = Color.Black,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
@@ -53,6 +56,8 @@ fun MovieSection(
                     CardStyle.WITH_DETAILS -> {
                         DetailedMovieCard(
                             movie = movie,
+                            onFavoriteClick = { onFavoriteClick(movie) },
+                            isFavorite = isFavorite(movie),
                             onClick = { onMovieClick(movie) }
                         )
                     }
@@ -70,7 +75,7 @@ fun CardViewPreview() {
             title = "Top Rated",
             movies = listOf(
                 Movie(
-                    id = 1,
+                    id = 1u,
                     title = "Movie 1",
                     overview = "Overview 1",
                     posterPath = "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
@@ -78,7 +83,7 @@ fun CardViewPreview() {
                     releaseDate = LocalDate.of(2021, 6, 23)
                 ),
                 Movie(
-                    id = 2,
+                    id = 2u,
                     title = "Movie 2",
                     overview = "Overview 2",
                     posterPath = "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
@@ -86,7 +91,7 @@ fun CardViewPreview() {
                     releaseDate = LocalDate.of(2021, 6, 23)
                 ),
                 Movie(
-                    id = 3,
+                    id = 3u,
                     title = "Movie 3",
                     overview = "Overview 3",
                     posterPath = "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
@@ -94,6 +99,8 @@ fun CardViewPreview() {
                     releaseDate = LocalDate.of(2021, 6, 23)
                 )
             ),
+            onFavoriteClick = {},
+            isFavorite = {true},
             cardStyle = CardStyle.WITH_DETAILS
         ){ }
     }

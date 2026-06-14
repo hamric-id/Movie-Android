@@ -41,7 +41,7 @@ class DetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createMockMovie(id: Int = 2): Movie {
+    private fun createMockMovie(id: UInt = 2u): Movie {
         return Movie(
             id = id,
             title = "The Dark Knight",
@@ -257,7 +257,7 @@ class DetailViewModelTest {
 
         val savedStateHandle = SavedStateHandle(mapOf("movieId" to 123))
 
-        coEvery { mockMovieRepository.getMovieDetail(123u) } returns createMockMovie(123)
+        coEvery { mockMovieRepository.getMovieDetail(123u) } returns createMockMovie(123u)
         coEvery { mockFavoriteRepository.isFavorite(123u) } returns false
 
         viewModel = DetailViewModel(
@@ -268,7 +268,7 @@ class DetailViewModelTest {
         advanceUntilIdle()
 
         coVerify { mockMovieRepository.getMovieDetail(123u) }
-        assertThat(viewModel.movieState.value?.id).isEqualTo(123)
+        assertThat(viewModel.movieState.value?.id).isEqualTo(123u)
     }
 
     @Test
@@ -295,7 +295,7 @@ class DetailViewModelTest {
         setupCommonMocks()  
 
         val savedStateHandle = SavedStateHandle(mapOf("movieId" to 2))
-        val previewMovie = createMockMovie(99)
+        val previewMovie = createMockMovie(99u)
 
         coEvery { mockMovieRepository.getMovieDetail(2u) } returns createMockMovie()
         coEvery { mockFavoriteRepository.isFavorite(2u) } returns false
@@ -308,7 +308,7 @@ class DetailViewModelTest {
 
         viewModel.setPreviewData(movie = previewMovie, favorite = true)
 
-        assertThat(viewModel.movieState.value?.id).isEqualTo(99)
+        assertThat(viewModel.movieState.value?.id).isEqualTo(99u)
         assertThat(viewModel.isFavorite.value).isTrue()
         assertThat(viewModel.isLoading.value).isFalse()
         assertThat(viewModel.error.value).isNull()

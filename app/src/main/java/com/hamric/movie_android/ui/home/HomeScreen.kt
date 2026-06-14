@@ -1,6 +1,7 @@
 package com.hamric.movie_android.ui.home
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -27,13 +28,14 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Movie Android",
+                        text = "MOVIES",
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
                     )
@@ -94,7 +96,8 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(16.dp)
+                            .padding(top = 16.dp, bottom = 0.dp, start = 16.dp, end = 0.dp),
+                        verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
                         MovieSection(
                             title = "Popular Movie",
@@ -103,22 +106,30 @@ fun HomeScreen(
                             onMovieClick = onMovieClick
                         )
 
-                        Spacer(modifier = Modifier.height(24.dp))
-
                         MovieSection(
                             title = "Top Rated",
                             movies = uiState.topRatedMovies,
                             cardStyle = CardStyle.WITH_DETAILS,
-                            onMovieClick = onMovieClick
+                            onMovieClick = onMovieClick,
+                            onFavoriteClick = { movie ->
+                                viewModel.toggleFavorite(movie.id)
+                            },
+                            isFavorite = { movie ->
+                                favoriteMovies.contains(movie.id)
+                            }
                         )
-
-                        Spacer(modifier = Modifier.height(24.dp))
 
                         MovieSection(
                             title = "Now Playing",
                             movies = uiState.nowPlayingMovies,
                             cardStyle = CardStyle.WITH_DETAILS,
-                            onMovieClick = onMovieClick
+                            onMovieClick = onMovieClick,
+                            onFavoriteClick = { movie ->
+                                viewModel.toggleFavorite(movie.id)
+                            },
+                            isFavorite = { movie ->
+                                favoriteMovies.contains(movie.id)
+                            }
                         )
                     }
                 }

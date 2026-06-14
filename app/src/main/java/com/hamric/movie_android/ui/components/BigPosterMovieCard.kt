@@ -56,7 +56,7 @@ fun CardViewPosterPreview() {
     MaterialTheme {
         BigPosterMovieCard (
             Movie(
-                id = 1,
+                id = 1u,
                 title = "Movie 1",
                 overview = "",
                 posterPath = "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",

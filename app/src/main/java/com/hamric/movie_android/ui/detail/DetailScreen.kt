@@ -160,7 +160,7 @@ fun DetailScreen(
                             Text(
                                 text = movie?.releaseDate?.run {
                                     "Release: " + this.toString(pattern = "MMM d yyyy", locale = Locale.US)
-                                } ?: "",
+                                }?:"",
                                 fontSize = 14.sp,
                                 modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Start
@@ -298,7 +298,7 @@ fun DetailScreen(
             horizontalArrangement = Arrangement.spacedBy(-8.dp)
         ) {
             IconButton(
-                onClick = { openShareSheet() }// shareMovie() }
+                onClick = { openShareSheet() }
             ) {
                 Icon(Icons.Default.Share, contentDescription = "Share")
             }

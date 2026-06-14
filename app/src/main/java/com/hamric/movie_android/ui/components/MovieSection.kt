@@ -77,14 +77,14 @@ fun CardViewPreview() {
                 Movie(
                     id = 1u,
                     title = "Movie 1",
-                    overview = "Overview 1",
+                    overview = "Overview 1cdwdwdwdwcwddww",
                     posterPath = "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
                     backdropPath = "",
                     releaseDate = LocalDate.of(2021, 6, 23)
                 ),
                 Movie(
                     id = 2u,
-                    title = "Movie 2",
+                    title = "Movie 2dxwdcewcwecde",
                     overview = "Overview 2",
                     posterPath = "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
                     backdropPath = "",
@@ -92,7 +92,7 @@ fun CardViewPreview() {
                 ),
                 Movie(
                     id = 3u,
-                    title = "Movie 3",
+                    title = "Movie 3cdeedceddceewddw",
                     overview = "Overview 3",
                     posterPath = "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
                     backdropPath = "",

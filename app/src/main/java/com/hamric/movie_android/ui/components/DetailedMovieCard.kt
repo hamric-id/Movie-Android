@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +52,8 @@ fun DetailedMovieCard(
     Card(
         modifier = Modifier
             .width(140.dp)
-            .height(190.dp),
+            .height(190.dp)
+            .padding(0.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
@@ -55,7 +61,7 @@ fun DetailedMovieCard(
         shape = RectangleShape
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(
@@ -76,13 +82,14 @@ fun DetailedMovieCard(
 
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.Top
             ) {
                 Column(
-                    modifier = Modifier.
-                        width(120.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(0.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
@@ -90,6 +97,7 @@ fun DetailedMovieCard(
                         fontSize = 14.sp,
                         color = Color.Black,
                         textAlign = TextAlign.Start,
+                        overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         lineHeight = 14.sp
                     )
@@ -100,20 +108,32 @@ fun DetailedMovieCard(
                         },
                         fontSize = 12.sp,
                         textAlign = TextAlign.Start,
+                        overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                         lineHeight = 12.sp
                     )
                 }
 
-                IconButton(
-                    onClick = onFavoriteClick,
-                    modifier = Modifier.offset(y = (-9).dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(0.dp),
+                    verticalArrangement = Arrangement.Top
                 ) {
-                    Icon(
-                        if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite",
-                        tint = if (isFavorite) Color.Red else Color.DarkGray
-                    )
+                    IconButton(
+                        onClick = onFavoriteClick,
+                        modifier = Modifier
+                            .size(37.dp)
+                            .offset(y = (-7).dp, x = (8).dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                            tint = if (isFavorite) Color.Red else Color.DarkGray
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }

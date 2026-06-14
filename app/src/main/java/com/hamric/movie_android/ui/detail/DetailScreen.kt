@@ -420,7 +420,7 @@ class PreviewDetailViewModel : DetailViewModel(
     init {
         setPreviewData(
             movie = Movie(
-                id = 2,
+                id = 2u,
                 title = "The Dark Knight",
                 overview = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, " +
                         "Batman must accept one of the greatest psychological and physical tests of his ability " +
@@ -437,7 +437,7 @@ class PreviewDetailViewModel : DetailViewModel(
 class MockMovieApiService : MovieApiService {
     override suspend fun getMovieDetail(movieId: UInt, language: String): MovieResponse {
         return MovieResponse(
-            id = movieId.toInt(),
+            id = movieId,
             title = "The Dark Knight",
             overview = "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham...",
             posterPath = "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",

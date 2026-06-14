@@ -3,7 +3,7 @@ package com.hamric.movie_android.data.model
 import com.google.gson.annotations.SerializedName
 
 data class MovieResponse(
-    val id: Int,
+    val id: UInt,
     val title: String,
     val overview: String,
     @SerializedName("backdrop_path") val backdropPath: String?,

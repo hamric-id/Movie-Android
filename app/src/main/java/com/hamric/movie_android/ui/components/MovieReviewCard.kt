@@ -87,7 +87,6 @@ fun MovieReviewCard(
                     lineHeight = 20.sp
                 )
 
-                // Simple expandable text
                 val needsTruncation = movieReview.content.length > 100
 
                 Crossfade(

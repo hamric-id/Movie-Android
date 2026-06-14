@@ -5,7 +5,7 @@ import com.hamric.movie_android.utils.DateUtils.toLocalDate
 import java.time.LocalDate
 
 data class Movie(
-    val id: Int,
+    val id: UInt,
     val title: String,
     val overview: String,
     val posterPath: String,

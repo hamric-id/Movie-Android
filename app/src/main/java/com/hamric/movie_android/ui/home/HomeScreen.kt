@@ -28,6 +28,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val favoriteMovies by viewModel.favoriteMovies.collectAsState()
 
     Scaffold(
         topBar = {
@@ -109,14 +110,26 @@ fun HomeScreen(
                             title = "Top Rated",
                             movies = uiState.topRatedMovies,
                             cardStyle = CardStyle.WITH_DETAILS,
-                            onMovieClick = onMovieClick
+                            onMovieClick = onMovieClick,
+                            onFavoriteClick = { movie ->
+                                viewModel.toggleFavorite(movie.id)
+                            },
+                            isFavorite = { movie ->
+                                favoriteMovies.contains(movie.id)
+                            }
                         )
 
                         MovieSection(
                             title = "Now Playing",
                             movies = uiState.nowPlayingMovies,
                             cardStyle = CardStyle.WITH_DETAILS,
-                            onMovieClick = onMovieClick
+                            onMovieClick = onMovieClick,
+                            onFavoriteClick = { movie ->
+                                viewModel.toggleFavorite(movie.id)
+                            },
+                            isFavorite = { movie ->
+                                favoriteMovies.contains(movie.id)
+                            }
                         )
                     }
                 }

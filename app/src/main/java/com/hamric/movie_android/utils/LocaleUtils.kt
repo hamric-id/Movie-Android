@@ -4,15 +4,11 @@ import java.util.Locale
 
 object LocaleUtils {
 
-    fun getDeviceLocaleString(separator: Char = '-'): String {
-        val currentLocale = Locale.getDefault()
+    fun Locale.toString(separator: Char): String {
+        if (separator == '_') return this.toString()
 
-        if (separator == '_') return currentLocale.toString()
-
-        val language = currentLocale.language
-        val country = currentLocale.country
+        val language = this.language
+        val country = this.country
         return if (country.isNotEmpty()) "$language$separator$country" else language
     }
-
-    fun getDeviceCountryCode(): String = Locale.getDefault().country //ISO 3166-1
 }

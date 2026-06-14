@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hamric.movie_android.data.model.Movie
 import com.hamric.movie_android.ui.types.CardStyle
+import java.time.LocalDate
 
 @Composable
 fun MovieSection(
@@ -73,21 +74,24 @@ fun CardViewPreview() {
                     title = "Movie 1",
                     overview = "Overview 1",
                     posterPath = "/tHhxWxge06goXU6ZQH1hj7vK8Hd.jpg",
-                    backdropPath = null
+                    backdropPath = "",
+                    releaseDate = LocalDate.of(2021, 6, 23)
                 ),
                 Movie(
                     id = 2,
                     title = "Movie 2",
                     overview = "Overview 2",
                     posterPath = "/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg",
-                    backdropPath = null
+                    backdropPath = "",
+                    releaseDate = LocalDate.of(2021, 6, 23)
                 ),
                 Movie(
                     id = 3,
                     title = "Movie 3",
                     overview = "Overview 3",
                     posterPath = "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
-                    backdropPath = null
+                    backdropPath = "",
+                    releaseDate = LocalDate.of(2021, 6, 23)
                 )
             ),
             cardStyle = CardStyle.WITH_DETAILS

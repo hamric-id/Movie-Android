@@ -4,12 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -20,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -29,7 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
-import androidx.navigation.navigation
+import com.hamric.movie_android.ui.common.SharedFavoritesViewModel
 import com.hamric.movie_android.ui.detail.DetailScreen
 import com.hamric.movie_android.ui.favorites.FavoritesScreen
 import com.hamric.movie_android.ui.home.HomeScreen
@@ -38,9 +36,9 @@ import com.hamric.movie_android.ui.home.HomeScreen
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
     val currentRoute = currentDestination?.route
+    val sharedFavoritesViewModel: SharedFavoritesViewModel = hiltViewModel()
     val isDetailScreen = currentRoute?.startsWith("detail") == true
 
     fun navigateBottomBar(navItem: String){
@@ -73,7 +71,8 @@ fun MainScreen() {
                         },
                         onFavoriteClick = {
                             navigateBottomBar(BottomNavItem.Favorites.route)
-                        }
+                        },
+                        sharedFavoritesViewModel = sharedFavoritesViewModel
                     )
                 }
 
@@ -93,7 +92,10 @@ fun MainScreen() {
                     )
                 ) {
                     DetailScreen(
-                        onBackPressed = { navController.popBackStack() }
+                        onBackPressed = {
+                            navController.popBackStack()
+                        },
+                        sharedFavoritesViewModel = sharedFavoritesViewModel
                     )
                 }
             }
